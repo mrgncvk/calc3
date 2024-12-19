@@ -1,0 +1,212 @@
+
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include <string>
+#include <iomanip>
+#include <algorithm>
+using namespace std;
+struct Expense {
+
+    float amount;
+
+    string category, description;
+
+    // Вывод одной записи о расходах
+    void display() const {
+        setlocale(LC_ALL, "ru");
+        cout << "Сумма: " << amount << ", Категория: " << category << ", Описание: " << description << endl;
+    }
+};
+
+
+class ExpenseNum {
+
+private:
+
+    vector<Expense> expenses; // Список всех расходов
+    const string file = "calculatorexpense.txt"; // Имя файла для сохранения данных
+
+public:
+    ExpenseNum() {
+        conservation(); // Загрузка данных из файла при запуске программы
+    }
+
+    ~ExpenseNum() {
+        save(); // Сохранение данных в файл при завершении программы
+    }
+
+    // Функция для добавления расхода
+    void addExpense() {
+        setlocale(LC_ALL, "ru");
+        Expense expense;
+        cout << "Введите сумму расхода: ";
+        while (!(std::cin >> expense.amount)) {
+            cerr << "Ошибка ввода. Введите число: ";
+            cin.clear();
+            cin.ignore(10000, '\n');
+        }
+        cin.ignore(); // Очистка буфера ввода
+
+        cout << "Введите категорию (например, Еда, Транспорт): ";
+        cin >> expense.category;
+
+        cout << "Введите описание: ";
+        cin >> expense.description;
+
+        expenses.push_back(expense);
+        cout << "Расход добавлен успешно." << endl;
+    }
+
+    // Функция для просмотра всех расходов
+    void viewExpenses() const {
+        setlocale(LC_ALL, "ru");
+        if (expenses.empty()) {
+            cout << "Список расходов пуст." << endl;
+            return;
+        }
+        
+        cout << "Список всех расходов:" << endl;
+        for (const auto& expense : expenses) {
+            expense.display();
+        }
+    }
+
+    // Подсчет общей суммы расходов
+    void calculateSumExpenses() const {
+        setlocale(LC_ALL, "ru");
+        double total = 0;
+        for (const auto& expense : expenses) {
+            total += expense.amount;
+        }
+        cout << "Общая сумма расходов: " << total << endl;
+    }
+
+    // Поиск расходов по категории
+    void searchCategory() const {
+        setlocale(LC_ALL, "ru");
+        string category;
+        cout << "Введите категорию для поиска: ";
+        cin.ignore();
+        cin >> category;
+
+        bool found = false;
+        for (const auto& expense : expenses) {
+            if (expense.category == category) {
+                expense.display();
+                found = true;
+            }
+        }
+
+        if (!found) {
+            cout << "Расходы в категории \"" << category << "\" не найдены." << endl;
+        }
+    }
+
+    // Метод для сортировки расходов по сумме
+    void sortExpensesByAmount() {
+        sort(expenses.begin(), expenses.end(), [](const Expense& a, const Expense& b) {
+            return a.amount < b.amount;
+            });
+        cout << "Расходы отсортированы по сумме." << endl;
+    }
+    // Сортировка расходов по имени категории
+    void sortExpensesByCategory() {
+        setlocale(LC_ALL, "ru");
+        sort(expenses.begin(), expenses.end(), [](const Expense& a, const Expense& b) {
+            return a.category < b.category;
+            });
+        cout << "Расходы отсортированы по категориям." << endl;
+    }
+    // Сохранение данных в файл
+    void save() const {
+        setlocale(LC_ALL, "ru");
+        ofstream File(file);
+        if (!File) {
+            cerr << "Ошибка сохранения данных в файл." << endl;
+            return;
+        }
+
+        for (const auto& expense : expenses) {
+            File << expense.amount << ";" << expense.category << ";" << expense.description << endl;
+        }
+
+        File.close();
+    }
+
+    // Загрузка данных из файла
+    void conservation() {
+        ifstream inFile(file);
+        if (!inFile) {
+            // Если файл не существует, просто выходим
+            return;
+        }
+
+        Expense expense;
+        setlocale(LC_ALL, "ru");
+        string line;
+        while (getline(inFile, line)) {
+            size_t pos1 = line.find(";");
+            size_t pos2 = line.find(";", pos1 + 1);
+
+            if (pos1 == string::npos || pos2 == string::npos) {
+                continue; // Пропускаем некорректные строки
+            }
+
+
+            expense.amount = stod(line.substr(0, pos1));
+            expense.category = line.substr(pos1 + 1, pos2 - pos1 - 1);
+            expense.description = line.substr(pos2 + 1);
+
+            expenses.push_back(expense);
+        }
+
+        inFile.close();
+    }
+};
+
+int main() {
+    setlocale(LC_ALL, "ru");
+    ExpenseNum tracker;
+
+    while (true) {
+        cout << "\n*-*-*-*-*-*-* МЕНЮ *-*-*-*-*-*-*-*-*\n"
+            << "1 <= Добавить расход\n"
+            << "2 <= Просмотреть все расходы\n"
+            << "3 <= Подсчитать общую сумму расходов\n"
+            << "4 <= Поиск расходов по категории\n"
+            << "5 <= Сортировка расходов по категории\n"
+            << "6 <= Сортировка расходов по сумме\n"
+            << "7 <= Выход\n"
+            << " ^_^ Выберите действие ^_^\n"
+            << "- - - - - - - - - - - - - - - - - - -" << endl;
+        int choice;
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+            tracker.addExpense();
+            break;
+        case 2:
+            tracker.viewExpenses();
+            break;
+        case 3:
+            tracker.calculateSumExpenses();
+            break;
+        case 4:
+            tracker.searchCategory();
+            break;
+        case 5:
+            tracker.sortExpensesByCategory();
+            break;
+        case 6:
+            tracker.sortExpensesByAmount();
+            break;
+        case 7:
+            std::cout << "Выход из программы." << endl;
+            return 0;
+        default:
+            cout << "Некорректный выбор. Попробуйте снова." << endl;
+        }
+    }
+}
